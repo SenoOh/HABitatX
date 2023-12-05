@@ -6,8 +6,8 @@ require 'erb'
 require 'fileutils'
 require 'pg'
 
-THINGS_FILE_PATH = 'src/public/things.json'
-ITEMS_FILE_PATH = 'src/public/items.json'
+THINGS_FILE_PATH = 'src/db/things.json'
+ITEMS_FILE_PATH = 'src/db/items.json'
 OPENHAB_PATH = '/etc/openhab'
 
 def get_things(things_file_path)
@@ -93,7 +93,7 @@ end
 
 
 def post_things(excel_things, things_erb)
-  xlsx = Roo::Excelx.new("#{__dir__}/excel/#{excel_things}") # Excelファイルを指定
+  xlsx = Roo::Excelx.new("#{__dir__}/db/excel/#{excel_things}") # Excelファイルを指定
   variables = xlsx.row(1)
   (2..xlsx.last_row).each do |row_number|
     values = xlsx.row(row_number)
@@ -103,12 +103,22 @@ def post_things(excel_things, things_erb)
     end
     erb_template = ERB.new(things_erb) # テンプレート文字列を使用する
     output = erb_template.result(binding) # erbファイルを書き換える
-    File.open("#{OPENHAB_PATH}/things/#{data['thingID']}.things", 'w') { |file| file.write(output) } # 新しいファイルにoutputでの変更を書き換える
+    File.open("#{__dir__}/db/created_thing.erb", 'w') { |file| file.write(output) } # 新しいファイルにoutputでの変更を書き換える
+    File.open("#{__dir__}/db/created_thing.erb", "r") do |input_file|
+      File.open("#{__dir__}/db/fixed_thing.erb", "w") do |output_file|
+        input_file.each_line do |line|
+          output_file.write(line) unless line.strip.empty? # 空行以外を書き込み
+        end
+      end
+    end
+    FileUtils.cp("#{__dir__}/db/fixed_thing.erb", "#{OPENHAB_PATH}/things/#{data['thingID']}.things")
   end
+  File.delete("#{__dir__}/db/created_thing.erb")
+  File.delete("#{__dir__}/db/fixed_thing.erb")
 end
 
 def delete_things(excel_things)
-  xlsx = Roo::Excelx.new("#{__dir__}/excel/#{excel_things}") # Excelファイルを指定
+  xlsx = Roo::Excelx.new("#{__dir__}/db/excel/#{excel_things}") # Excelファイルを指定
   variables = xlsx.row(1)
   (2..xlsx.last_row).each do |row_number|
     values = xlsx.row(row_number)
@@ -122,7 +132,7 @@ end
 
 
 def post_items(excel_items, items_erb)
-  xlsx = Roo::Excelx.new("#{__dir__}/excel/#{excel_items}") # Excelファイルを指定
+  xlsx = Roo::Excelx.new("#{__dir__}/db/excel/#{excel_items}") # Excelファイルを指定
   variables = xlsx.row(1)
   (2..xlsx.last_row).each do |row_number|
     values = xlsx.row(row_number)
@@ -137,7 +147,7 @@ def post_items(excel_items, items_erb)
 end
 
 def delete_items(excel_items)
-  xlsx = Roo::Excelx.new("#{__dir__}/excel/#{excel_items}") # Excelファイルを指定
+  xlsx = Roo::Excelx.new("#{__dir__}/db/excel/#{excel_items}") # Excelファイルを指定
   variables = xlsx.row(1)
   (2..xlsx.last_row).each do |row_number|
     values = xlsx.row(row_number)
