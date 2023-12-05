@@ -1,0 +1,26 @@
+<form action="/things/<%= params[:id] %>" method="post">
+  <div class="mb-3">
+    <label for="title_things" class="form-label">ファイル名</label>
+    <input type="text" id="title_things" name="title_things" value="<%= @title_things %>" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label for="excel_things" class="form-label">Excel</label>
+    <input type="file" id="excel_things" name="excel_things" accept=".xls,.xlsx" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label for="things_erb" class="form-label">Template</label>
+    <select id="things_erb" name="things_erb" class="form-control">
+      <option value="">Template</option>
+      <% @template.each do |template| %>
+        <option value="<%= template["title"] %>"><%= template["title"] %></option>
+      <% end %>
+    </select>
+  </div>
+  <div>
+    <input type="hidden" name="_method" value="patch">
+    <input type="submit" value="保存" class="btn btn-primary">
+  </div>
+</form>
+<div>
+  <a class="btn btn-secondary" href="/things/<%= params[:id] %>">戻る</a>
+</div>

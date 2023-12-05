@@ -1,0 +1,13 @@
+<div class="mb-4">
+  <a class="btn btn-secondary" href="/things/new">Thingsを作成</a>
+</div>
+<ul>
+  <% @things.each do |id, post| %>
+    <li>
+      <a class="btn btn-secondary" href="/things/<%= id %>"><%= post["title_things"] %></a>
+    </li>
+  <% end %>
+</ul>
+<div>
+  <a class="btn btn-secondary" href="/">HABitatX</a>
+</div>

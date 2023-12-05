@@ -1,0 +1,13 @@
+<div class="mb-4">
+  <a class="btn btn-secondary" href="/template/new">Templateを作成</a>
+</div>
+<ul>
+  <% @template.each do |template| %>
+    <li>
+      <a class="btn btn-secondary" href="/template/<%= template["id"] %>"><%= CGI.escapeHTML(template["title"]) %></a>
+    </li>
+  <% end %>
+</ul>
+<div>
+  <a class="btn btn-secondary" href="/">HABitatX</a>
+</div>
