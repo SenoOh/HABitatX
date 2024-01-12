@@ -4,11 +4,30 @@ require 'json'
 require 'roo'
 require 'erb'
 require 'fileutils'
+require 'active_record'
+require 'sinatra/activerecord'
 require 'pg'
+require 'rake'
 
-THINGS_FILE_PATH = 'src/db/things.json'
-ITEMS_FILE_PATH = 'src/db/items.json'
+THINGS_FILE_PATH = '/db/things.json'
+ITEMS_FILE_PATH = '/db/items.json'
 OPENHAB_PATH = '/etc/openhab'
+
+
+set :database_file, 'config/database.yml'
+
+ActiveRecord::Base.establish_connection(
+  adapter: 'postgresql',
+  database: 'postgres', 
+  username: 'habitatx'
+)
+class Template < ActiveRecord::Base
+  belongs_to :datafiles
+end
+
+class Datafile < ActiveRecord::Base
+  has_many :templates
+end
 
 def get_things(things_file_path)
   if File.zero?(things_file_path)
@@ -41,52 +60,6 @@ end
 
 def set_items(items_file_path, items)
   File.open(items_file_path, 'w') { |f| f.write(JSON.pretty_generate(items)) }
-end
-
-
-
-def conn
-  @conn ||= PG.connect(dbname: 'postgres', user: 'habitatx', password: 'habitatX')
-end
-
-configure do
-  result = conn.exec("SELECT * FROM information_schema.tables WHERE table_name = 'template'")
-  conn.exec('CREATE TABLE template (id serial, title varchar(255), content text)') if result.values.empty?
-end
-
-def read_template_all
-  result = conn.exec('SELECT * FROM template')
-  
-  if result.num_tuples.zero?
-    [] # 空の場合は空の配列を返す
-  else
-    result
-  end
-end
-
-
-def read_template_by_id(id)
-  result = conn.exec_params('SELECT * FROM template WHERE id = $1;', [id])
-  result.tuple_values(0)
-end
-
-def read_template_by_title(title)
-  result = conn.exec_params('SELECT * FROM template WHERE title = $1', [title] )
-  result.tuple_values(0)
-end
-
-
-
-def post_template(title, content)
-  conn.exec_params('INSERT INTO template(title, content) VALUES ($1, $2);', [title, content])
-end
-
-def edit_template(title, content, id)
-  conn.exec_params('UPDATE template SET title = $1, content = $2 WHERE id = $3;', [title, content, id])
-end
-
-def delete_template(title, id)
-  conn.exec_params('DELETE FROM template WHERE id = $1;', [id])
 end
 
 
@@ -182,16 +155,15 @@ get '/things' do
 end
 
 get '/things/new' do
-  @template = read_template_all
+  @template = Code.all
   erb :'things/new'
 end
 
 # get '/things/:id' do
 post '/things' do
-  @template = read_template_all
+  @template = Datafile.all
   title_things = params[:title_things]
-  excel_things = params[:excel_things]
-  things_erb = params[:things_erb]
+  template_things = params[:template_things]
 
   things = get_things(THINGS_FILE_PATH)
   if things.empty?
@@ -202,8 +174,8 @@ post '/things' do
   things[id] = { 'title_things' => title_things, 'excel_things' => excel_things, 'things_erb' => things_erb }
   set_things(THINGS_FILE_PATH, things)
 
-  things_template = read_template_by_title(things_erb)
-  things_content = things_template[2]
+  things_template = Code.find_by(things_erb)
+  things_content = things_template["content"]
   post_things(excel_things, things_content)
 
   redirect '/things'
@@ -219,7 +191,7 @@ get '/things/:id' do
 end
 
 get '/things/:id/edit' do
-  @template = read_template_all
+  @template = Code.all
   things = get_things(THINGS_FILE_PATH)
   @title_things = things[params[:id]]['title_things']
   @excel_things = things[params[:id]]['excel_things']
@@ -228,7 +200,7 @@ get '/things/:id/edit' do
 end
 
 patch '/things/:id' do
-  @template = read_template_all
+  @template = Code.all
   title_things = params[:title_things]
   excel_things = params[:excel_things]
   things_erb = params[:things_erb]
@@ -238,8 +210,8 @@ patch '/things/:id' do
   things[params[:id]] = { 'title_things' => title_things, 'excel_things' => excel_things, 'things_erb' => things_erb }
   set_things(THINGS_FILE_PATH, things)
 
-  things_template = read_template_by_title(things_erb)
-  things_content = things_template[2]
+  things_template = Code.find_by(things_erb)
+  things_content = things_template["content"]
   delete_things(@excel_things)
   post_things(excel_things, things_content)
 
@@ -273,13 +245,13 @@ get '/items' do
 end
 
 get '/items/new' do
-  @template = read_template_all
+  @template = Code.all
   erb :'items/new'
 end
 
 # get '/items/:id' do
 post '/items' do
-  @template = read_template_all
+  @template = Code.all
   title_items = params[:title_items]
   excel_items = params[:excel_items]
   items_erb = params[:items_erb]
@@ -293,8 +265,8 @@ post '/items' do
   items[id] = { 'title_items' => title_items, 'excel_items' => excel_items, 'items_erb' => items_erb}
   set_items(ITEMS_FILE_PATH, items)
 
-  items_template = read_template_by_title(items_erb)
-  items_content = items_template[2]
+  items_template = Code.find_by(items_erb)
+  items_content = items_template["content"]
   post_items(excel_items, items_content)
 
   redirect '/items'
@@ -310,7 +282,7 @@ get '/items/:id' do
 end
 
 get '/items/:id/edit' do
-  @template = read_template_all
+  @template = Code.all
   items = get_items(ITEMS_FILE_PATH)
   @title_items = items[params[:id]]['title_items']
   @excel_items = items[params[:id]]['excel_items']
@@ -319,7 +291,7 @@ get '/items/:id/edit' do
 end
 
 patch '/items/:id' do
-  @template = read_template_all
+  @template = Code.all
   title_items = params[:title_items]
   excel_items = params[:excel_items]
   items_erb = params[:items_erb]
@@ -329,8 +301,8 @@ patch '/items/:id' do
   items[params[:id]] = { 'title_items' => title_items, 'excel_items' => excel_items, 'items_erb' => items_erb }
   set_items(ITEMS_FILE_PATH, items)
 
-  items_template = read_template_by_title(items_erb)
-  items_content = items_template[2]
+  items_template = Code.find_by(items_erb)
+  items_content = items_template["content"]
   delete_items(@excel_items)
   post_items(excel_items, items_content)
 
@@ -356,7 +328,7 @@ end
 
 # get '/template' do
 get '/template' do
-  @template = read_template_all
+  @template = Template.all
   erb :'template/index'
 end
 
@@ -366,43 +338,281 @@ end
 
 # get '/template/:id' do
 post '/template' do
-  title = params[:title]
+  title_template = params[:title_template]
   content = params[:content]
-  post_template(title, content)
+  basename = params[:basename]
+  file_type = params[:file_type]
+  Template.create(title_template: title_template, content: content, basename: basename, file_type: file_type)
 
   redirect '/template'
 end
 
 
 get '/template/:id' do
-  template = read_template_by_id(params[:id])
-  @title = template[1]
-  @content = template[2]
+  template = Template.find_by(id: params[:id])
+  @title_template = template["title_template"]
+  @content = template["content"]
+  @basename = template["basename"]
+  @file_type = template["file_type"]
   erb :'template/show'
 end
 
 get '/template/:id/edit' do
-  template = read_template_by_id(params[:id])
-  @title = template[1]
-  @content = template[2]
+  template = Template.find_by(id: params[:id])
+  @title_template = template["title_template"]
+  @content = template["content"]
+  @basename = template["basename"]
+  @file_type = template["file_type"]
   erb :'/template/edit'
 end
 
 patch '/template/:id' do
-  title = params[:title]
+  title_template = params[:title_template]
   content = params[:content]
-
-  edit_template(title, content, params[:id])
+  basename = params[:basename]
+  file_type = params[:file_type]
+  template = Template.find_by(id: params[:id])
+  return unless template
+  template.update(title_template: title_template, content: content, basename: basename, file_type: file_type)
 
   redirect "/template/#{params[:id]}"
 end
 
 
 delete '/template/:id' do
-  template = read_template_by_id(params[:id])
-  @title = template[1]
+  template = Template.find_by(id: params[:id])
+  return unless template
 
-  delete_template(@title, params[:id])
-
+  template.destroy
   redirect '/template'
 end
+
+
+
+
+
+# # get '/code' do
+# get '/code' do
+#   @code = Code.all
+#   erb :'code/index'
+# end
+
+# get '/code/new' do
+#   erb :'code/new'
+# end
+
+# # get '/code/:id' do
+# post '/code' do
+#   title_code = params[:title_code]
+#   content = params[:content]
+#   Code.create(title_code: title_code, content: content)
+
+#   redirect '/code'
+# end
+
+
+# get '/code/:id' do
+#   code = Code.find_by(id: params[:id])
+#   @title_code = code["title_code"]
+#   @content = code["content"]
+#   erb :'code/show'
+# end
+
+# get '/code/:id/edit' do
+#   code = Code.find_by(id: params[:id])
+#   @title_code = code["title_code"]
+#   @content = code["content"]
+#   erb :'/code/edit'
+# end
+
+# patch '/code/:id' do
+#   title_code = params[:title_code]
+#   content = params[:content]
+#   code = Code.find_by(id: params[:id])
+#   return unless code
+#   code.update(title_code: title_code, content: content)
+
+#   redirect "/code/#{params[:id]}"
+# end
+
+
+# delete '/code/:id' do
+#   code = Code.find_by(id: params[:id])
+#   return unless code
+
+#   code.destroy
+#   redirect '/code'
+# end
+
+
+
+# get '/datafile' do
+get '/datafile' do
+  @datafile = Datafile.all
+  erb :'datafile/index'
+end
+
+get '/datafile/new' do
+  @template = Template.all
+  erb :'datafile/new'
+end
+
+# get '/datafile/:id' do
+post '/datafile' do
+  @template = Template.all
+  title_datafile = params[:title_datafile]
+  table = params[:table]
+  title_template = params[:title_template]
+
+  file_data = File.binread("#{__dir__}/db/excel/#{table}")
+
+  selected_template = Template.find_by(title_template: title_template)
+  template_id = selected_template["id"]
+
+  Datafile.create(title_datafile: title_datafile, table: file_data, template_id: template_id)
+
+  redirect '/datafile'
+end
+
+get '/datafile/:id/download' do
+  datafile = Datafile.find(params[:id])
+  table_data = datafile["table"]
+  File.open("#{__dir__}/db/excel/file/nomlab_member.xlsx", 'wb') do |file|
+    file.write(table_data)
+  end
+  redirect "/datafile/#{params[:id]}"
+end
+
+
+get '/datafile/:id' do
+  datafile = Datafile.find_by(id: params[:id])
+  @title_datafile = datafile["title_datafile"]
+  @table = datafile["table"]
+  template_id = datafile["template_id"]
+  template_table_id = Template.find_by(id: template_id)
+  @code = template_table_id["content"]
+  erb :'datafile/show'
+end
+
+get '/datafile/:id/edit' do
+  @template = Template.all
+  datafile = Datafile.find_by(id: params[:id])
+  @title_datafile = datafile["title_datafile"]
+  @table = datafile["table"]
+  @template_id = datafile["template_id"]
+  erb :'/datafile/edit'
+end
+
+
+patch '/datafile/:id' do
+  @template = Template.all
+  title_datafile = params[:title_datafile]
+  table = params[:table]
+  title_template = params[:title_template]
+  file_data = File.binread("#{__dir__}/db/excel/#{excel}")
+
+  selected_template = Template.find_by(title_template: title_template)
+  template_id = selected_template["id"]
+
+  datafile = Datafile.find_by(id: params[:id])
+  return unless datafile
+  datafile.title_datafile = excel
+  datafile.table = file_data
+  datafile.template_id = template_id
+  datafile.save
+  redirect "/datafile/#{params[:id]}"
+end
+
+
+delete '/datafile/:id' do
+  datafile = Datafile.find_by(id: params[:id])
+  return unless datafile
+
+  datafile.destroy
+  redirect '/datafile'
+end
+
+
+
+# # get '/template' do
+# get '/template' do
+#   @template = Datafile.all
+#   erb :'template/index'
+# end
+
+# get '/template/new' do
+#   @codes = Code.all
+#   erb :'template/new'
+# end
+
+# # get '/template/:id' do
+# post '/template' do
+#   @codes = Code.all
+#   excel = params[:excel]
+#   codes_title = params[:codes_title]
+
+#   file_data = File.binread("#{__dir__}/db/excel/#{excel}")
+
+#   selected_code = Code.find_by(title_code: codes_title)
+#   code_id = selected_code["id"]
+
+#   Datafile.create(title_template: excel, excel: file_data, codes_id: code_id)
+
+#   redirect '/template'
+# end
+
+# get '/template/:id/download' do
+#   template = Datafile.find(params[:id])
+#   excel_data = template["excel"]
+#   File.open("#{__dir__}/db/excel/file/nomlab_member.xlsx", 'wb') do |file|
+#     file.write(excel_data)
+#   end
+#   redirect "/template/#{params[:id]}"
+# end
+
+
+# get '/template/:id' do
+#   template = Datafile.find_by(id: params[:id])
+#   @excel = template["title_template"]
+#   codes_id = template["codes_id"]
+#   code_template = Code.find_by(id: codes_id)
+#   @code = code_template["content"]
+#   erb :'template/show'
+# end
+
+# get '/template/:id/edit' do
+#   @codes = Code.all
+#   template = Datafile.find_by(id: params[:id])
+#   @excel = template["title_template"]
+#   @codes_id = template["codes_id"]
+#   erb :'/template/edit'
+# end
+
+
+# patch '/template/:id' do
+#   @codes = Code.all
+#   excel = params[:excel]
+#   codes_title = params[:codes_title]
+#   file_data = File.binread("#{__dir__}/db/excel/#{excel}")
+
+#   selected_code = Code.find_by(title_code: codes_title)
+#   code_id = selected_code["id"]
+
+#   datafile = Datafile.find_by(id: params[:id])
+
+#   return unless datafile
+#   datafile.title_template = excel
+#   datafile.excel = file_data
+#   datafile.codes_id = code_id
+#   datafile.save
+#   redirect "/template/#{params[:id]}"
+# end
+
+
+# delete '/template/:id' do
+#   template = Datafile.find_by(id: params[:id])
+#   return unless template
+
+#   template.destroy
+#   redirect '/template'
+# end

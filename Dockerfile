@@ -1,7 +1,7 @@
 FROM ruby:3.0
 
 WORKDIR /var/www
-COPY ./src /var/www
+COPY ./ /var/www
 
 RUN bundle config --local set path 'vendor/bundle'\
     && bundle install

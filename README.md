@@ -62,7 +62,7 @@ $ sudo systemctl restart postgresql
 ## Linux
 1. 起動
 ```bash
-$ bundle exec ruby src/habitatx.rb
+$ bundle exec ruby habitatx.rb
 ```
 起動後，ブラウザ上で http://localhost:4567 を開くと HABitatX の画面が開く
 
@@ -73,10 +73,10 @@ $ docker build -t habitatx_docker .
 ```
 2. 起動 (openHAB がコンテナで動いていない場合)
 ```shell
-$ docker run -it -p 5678:4567 --name habitatx -v ${PWD}/src:/var/www habitatx_docker
+$ docker run -it -p 5678:4567 --name habitatx -v ${PWD}/:/var/www habitatx_docker
 ```
 3. 起動 (openHAB がコンテナで動いている場合)
 ```shell
-$ docker run -it -p 5678:4567 --name habitatx -v ${PWD}/src:/var/www --volumes-from <openHABのコンテナ名> habitatx_docker
+$ docker run -it -p 5678:4567 --name habitatx -v ${PWD}/:/var/www --volumes-from <openHABのコンテナ名> habitatx_docker
 ```
 起動後，ブラウザ上で http://localhost:5678 を開くと HABitatX の画面が開く

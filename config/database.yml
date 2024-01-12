@@ -1,0 +1,26 @@
+default: &default
+  adapter: postgresql
+  timeout: 5000
+  pool: 5
+  encoding: unicode # 追加
+
+development:
+  <<: *default
+  database: postgres
+  username: habitatx
+  password: habitatX
+  host: localhost
+
+test:
+  <<: *default
+  database: postgres
+  username: habitatx
+  password: habitatX
+  host: localhost
+
+production:
+  <<: *default
+  database: postgres
+  username: habitatx
+  password: habitatX
+  host: localhost

@@ -1,0 +1,23 @@
+<div>
+  <p>Excel : <%= @excel %></p>
+  <div>
+    <a href="/template/<%= params[:id] %>/download" class="btn btn-primary">Excelファイルをダウンロード</a>
+  </div>
+    <pre class="p-3 mb-0">
+    <code class="language-javascript">
+<%= @code %>
+    </code>
+  </pre>
+</div>
+<div class="d-flex mb-4">
+  <form action="/template/<%= params[:id] %>/edit" method="get">
+    <input type="submit" value="編集" class="btn btn-primary me-2">
+  </form>
+  <form action="/template/<%= params[:id] %>" method="post">
+    <input type="hidden" name="_method" value="delete">
+    <input type="submit" value="削除" class="btn btn-primary">
+  </form>
+</div>
+<div>
+  <a class="btn btn-secondary" href="/template">Template一覧に戻る</a>
+</div>

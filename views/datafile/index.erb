@@ -1,0 +1,13 @@
+<div class="mb-4">
+  <a class="btn btn-secondary" href="/datafile/new">Datafileを作成</a>
+</div>
+<ul>
+  <% @datafile.each do |datafile| %>
+    <li>
+      <a class="btn btn-secondary" href="/datafile/<%= datafile["id"] %>"><%= CGI.escapeHTML(datafile["title_datafile"]) %></a>
+    </li>
+  <% end %>
+</ul>
+<div>
+  <a class="btn btn-secondary" href="/">HABitatX</a>
+</div>

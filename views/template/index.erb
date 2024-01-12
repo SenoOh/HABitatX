@@ -4,7 +4,7 @@
 <ul>
   <% @template.each do |template| %>
     <li>
-      <a class="btn btn-secondary" href="/template/<%= template["id"] %>"><%= CGI.escapeHTML(template["title"]) %></a>
+      <a class="btn btn-secondary" href="/template/<%= template["id"] %>"><%= CGI.escapeHTML(template["title_template"]) %></a>
     </li>
   <% end %>
 </ul>
