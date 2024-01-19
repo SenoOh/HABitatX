@@ -1,14 +1,18 @@
-<form action="/template/<%= params[:id] %>" method="post">
+<form action="/datafile/<%= params[:id] %>" method="post">
   <div class="mb-3">
-    <label for="excel" class="form-label">Excel</label>
-    <input type="file" id="excel" name="excel" accept=".xls,.xlsx" class="form-control">
+    <label for="title_datafile" class="form-label">タイトル</label>
+    <input type="text" id="title_datafile" name="title_datafile" value="<%= @title_datafile %>" class="form-control">
   </div>
   <div class="mb-3">
-    <label for="codes_title" class="form-label">Code</label>
-    <select id="codes_title" name="codes_title" class="form-control">
+    <label for="table" class="form-label">Excel</label>
+    <textarea id="table" name="table" class="form-control"><%= @table %></textarea>
+  </div>
+  <div class="mb-3">
+    <label for="title_template" class="form-label">Code</label>
+    <select id="title_template" name="title_template" class="form-control">
       <option value="">Code</option>
-      <% @codes.each do |codes| %>
-        <option value="<%= codes["title_code"] %>"><%= codes["title_code"] %></option>
+      <% @template.each do |template| %>
+        <option value="<%= template["title_template"] %>"><%= template["title_template"] %></option>
       <% end %>
     </select>
   </div>
@@ -18,5 +22,5 @@
   </div>
 </form>
 <div>
-  <a class="btn btn-secondary" href="/template/<%= params[:id] %>">戻る</a>
+  <a class="btn btn-secondary" href="/datafile/<%= params[:id] %>">戻る</a>
 </div>
