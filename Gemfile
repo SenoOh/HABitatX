@@ -8,6 +8,8 @@ gem "sinatra"
 gem "webrick"
 gem "sinatra-contrib"
 gem "roo"
+gem 'axlsx'
+gem 'zip-zip'
 gem "activerecord"
 gem "sinatra-activerecord"
 gem "rake"

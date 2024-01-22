@@ -33,19 +33,25 @@
     <div>
       <a href="/datafile/<%= params[:id] %>/download" class="btn btn-primary">Excelファイルをダウンロード</a>
     </div>
+    <p>タイトル : <%= @title_template %></p>
     <pre class="p-3 mb-0">
       <code class="language-javascript">
-<%= @code %>
+<%= @content %>
       </code>
     </pre>
+    <p>openHAB 設定ファイル名 : <%= @basename %></p>
+    <p>拡張子 : <%= @file_type %></p>
   </div>
   <div class="d-flex mb-4">
+    <form action="/template/<%= @id_template %>/edit" method="get">
+      <input type="submit" value="Template編集" class="btn btn-primary me-2">
+    </form>
     <form action="/datafile/<%= params[:id] %>/edit" method="get">
-      <input type="submit" value="編集" class="btn btn-primary me-2">
+      <input type="submit" value="Datafile編集" class="btn btn-primary me-2">
     </form>
     <form action="/datafile/<%= params[:id] %>" method="post">
       <input type="hidden" name="_method" value="delete">
-      <input type="submit" value="削除" class="btn btn-primary">
+      <input type="submit" value="Datafile削除" class="btn btn-primary">
     </form>
   </div>
   <div>

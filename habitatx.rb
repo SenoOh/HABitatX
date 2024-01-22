@@ -2,6 +2,7 @@ require 'sinatra'
 require 'sinatra/reloader'
 require 'json'
 require 'roo'
+require 'axlsx'
 require 'erb'
 require 'fileutils'
 require 'active_record'
@@ -9,8 +10,6 @@ require 'sinatra/activerecord'
 require 'pg'
 require 'rake'
 
-THINGS_FILE_PATH = '/db/things.json'
-ITEMS_FILE_PATH = '/db/items.json'
 OPENHAB_PATH = '/etc/openhab'
 
 
@@ -31,6 +30,7 @@ end
 
 
 def post_things(hash_json, template_code)
+  puts "dedededede:#{hash_json.inspect}"
   for code in hash_json['data']
     erb_template = ERB.new(template_code) # テンプレート文字列を使用する
     output = erb_template.result(binding) # erbファイルを書き換える
@@ -49,6 +49,7 @@ def post_things(hash_json, template_code)
 end
 
 def delete_things(hash_json)
+  puts "dedededede:#{hash_json.inspect}"
   for code in hash_json['data']
     File.delete("#{OPENHAB_PATH}/things/#{code['thingID']}.things")
   end
@@ -69,6 +70,32 @@ def delete_items(hash_json)
   end
 end
 
+
+def json_to_excel(json_data, output_file)
+  workbook = Axlsx::Package.new
+  workbook.workbook.add_worksheet(name: 'Sheet1') do |sheet|
+    add_json_data_to_sheet(sheet, json_data)
+  end
+  count = 0
+  new_output_file = output_file
+  while File.exist?(new_output_file)
+    count += 1
+    new_output_file = output_file.gsub(/\.xlsx$/, "_#{count}.xlsx")
+  end
+  workbook.serialize(new_output_file)
+  new_output_file
+end
+
+
+def add_json_data_to_sheet(sheet, json_data)
+  data_array = json_data["data"]
+  headers = data_array.first.keys
+  sheet.add_row(headers)
+  data_array.each do |data|
+    row_data = headers.map { |header| data[header] }
+    sheet.add_row(row_data)
+  end
+end
 
 
 get '/' do
@@ -199,13 +226,27 @@ post '/datafile' do
   redirect '/datafile'
 end
 
+get '/datafile/:id/download' do
+  datafile = Datafile.find_by(id: params[:id])
+  table = datafile["table"]
+  table_to_json = table.to_json
+  json_data = JSON.parse(table_to_json)
+  output_file = "#{__dir__}/db/excel/download.xlsx"
+  json_to_excel(json_data, output_file)
+  redirect "/datafile/#{params[:id]}"
+end
+
 get '/datafile/:id' do
   datafile = Datafile.find_by(id: params[:id])
   @title_datafile = datafile["title_datafile"]
   @table = datafile["table"]
   template_id = datafile["template_id"]
   template_table_id = Template.find_by(id: template_id)
-  @code = template_table_id["content"]
+  @id_template=template_table_id["id"]
+  @title_template = template_table_id["title_template"]
+  @content = template_table_id["content"]
+  @basename = template_table_id["basename"]
+  @file_type = template_table_id["file_type"]
   erb :'datafile/show'
 end
 
@@ -214,7 +255,15 @@ get '/datafile/:id/edit' do
   datafile = Datafile.find_by(id: params[:id])
   @title_datafile = datafile["title_datafile"]
   @table = datafile["table"]
-  @template_id = datafile["template_id"]
+  template_id = datafile["template_id"]
+
+  template_table = Template.find_by(id: template_id)
+  @id_template = template_table["id"] if template_table
+
+  @title_template = template_table["title_template"]
+  @content = template_table["content"]
+  @basename = template_table["basename"]
+  @file_type = template_table["file_type"]
   erb :'/datafile/edit'
 end
 
@@ -223,17 +272,23 @@ patch '/datafile/:id' do
   @template = Template.all
   datafile = Datafile.find_by(id: params[:id])
   title_datafile = params[:title_datafile]
+
   table = params[:table]
-  puts table.inspect
+
   table_json = table.gsub('=>', ':')
-  puts table_json.inspect
+
   table_data = JSON.parse(table_json)
-  puts "sasasasasasa:#{table_data.inspect}"
+
   title_template = params[:title_template]
 
+  content = params[:content]
+  basename = params[:basename]
+  file_type = params[:file_type]
+  
   selected_template = Template.find_by(title_template: title_template)
   template_id = selected_template["id"]
   template_code = selected_template["content"]
+
   return unless datafile
   datafile.update(title_datafile: title_datafile, table: table_data, template_id: template_id)
 
