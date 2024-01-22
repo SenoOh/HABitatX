@@ -6,13 +6,28 @@ HABitatX は，openHAB では煩雑になりがちな複数デバイスの一括
 この名前は，openHAB を表す"HAB"と生息地を表す"habitat"，未来への展望を表す"X"を組み合わせたものである．
 # Requirements
 + Ruby 3.x
-+ PostgreSQL 14.x
-  + https://www.postgresql.org/
 + openHAB 3~
   + https://www.openhab.org/
++ PostgreSQL 14.x
+  + https://www.postgresql.org/
+
 
 # Setup
-## Install PostgreSQL
+## HABitatX
+1. ダウンロードして`bundle install`する
+   ```bash
+   $ git clone https://github.com/SenoOh/HABitatX.git
+   $ cd HABitatX
+   $ bundle install
+   ```
+2. DBを作成する
+  ```bash
+  $ bundle exec rake db:migrate
+  ```
+## Install SQL
+本システムは`DB`との接続に`ActiveRecord`を使用しているため，任意のリレーショナルデータベース管理システム(`RDBMS`)を使用できる．今回は例として`PostgreSQL`のインストールについて説明する．
+
+### Install PostgreSQL
 + PostgreSQL 14 の公式リポジトリを追加する
 ```
 $ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
@@ -35,10 +50,9 @@ $ sudo -i -u postgres
 + データベースに接続して ROLE の password を変更する
 ```
 $ psql
-postgres=# ALTER USER habitatx PASSWORD 'habitatX'; 
-postgres=# ALTER USER postgres PASSWORD 'Postgres';
+postgres=# ALTER USER habitatx PASSWORD 'your_password'; 
 ```
-+ シェルからログアウトし，PostgreSQLの pg_hba.conf ファイルの90，95，102行目に記述されている`peer`を`md5`に書き換えてパスワード認証方式にする
++ シェルからログアウトし，PostgreSQLの pg_hba.conf ファイルの認証方式を`peer`から`trust`に書き換える
 ```
 $ sudo nano /etc/postgresql/14/main/pg_hba.conf
 ```
@@ -46,18 +60,23 @@ $ sudo nano /etc/postgresql/14/main/pg_hba.conf
 ```
 $ sudo systemctl restart postgresql
 ```
-
-## HABitatX
-1. ダウンロードして`bundle install`する
-   ```bash
-   $ git clone https://github.com/SenoOh/HABitatra_docker.git
-   $ cd HABitatX
-   $ bundle install
-   ```
++ PostgreSQLに関連するライブラリをインストールする
+```
+$ sudo apt install libpq-dev
+```
 
 # Launch
 ## 事前準備
-+ `habitatx.rb` の `OPENHAB_PATH` を自分の openHAB の設定ファイルが置かれるディレクトリに変更する
+1. `habitatx.rb` の `OPENHAB_PATH` を自分の `openHAB` の設定ファイルが置かれるディレクトリに変更する
+2. `config/database.yml` の `SQL` の情報を自分の `SQL` の情報に変更する
+3. `bundle install`する
+   ```bash
+   $ bundle install
+   ```
+4. DBを作成する
+  ```bash
+  $ bundle exec rake db:migrate
+  ```
 
 ## Linux
 1. 起動
