@@ -8,7 +8,7 @@
     <textarea id="content" name="content" class="form-control"></textarea>
   </div>
   <div class="mb-3">
-    <label for="basename" class="form-label">openHAB 設定ファイル名</label>
+    <label for="basename" class="form-label">openHAB ID prefix</label>
     <input type="text" id="basename" name="basename" class="form-control">
   </div>
   <div class="mb-3">
@@ -18,10 +18,18 @@
       <option value="things">things</option>
     </select>
   </div>
+  <div class="mb-3">
+    <p>template_things</p>
+    <textarea class="form-control"><%= @template_things_content %></textarea>
+  </div>
+  <div class="mb-3">
+    <p>template_items</p>
+    <textarea class="form-control"><%= @template_items_content %></textarea>
+  </div>
   <div>
     <input type="submit" value="保存" class="btn btn-primary">
   </div>
 </form>
 <div>
-  <a class="btn btn-secondary" href="/code">Template一覧に戻る</a>
+  <a class="btn btn-secondary" href="/template">Template一覧に戻る</a>
 </div>

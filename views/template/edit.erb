@@ -1,21 +1,16 @@
 <form action="/template/<%= params[:id] %>" method="post">
   <div class="mb-3">
-    <label for="title_template" class="form-label">タイトル</label>
-    <input type="text" id="title_template" name="title_template" value="<%= @title_template %>" class="form-control">
+    <label for="title_template" class="form-label">タイトル：<%= @title_template %></label>
   </div>
   <div class="mb-3">
     <label for="content" class="form-label">コード</label>
     <textarea id="content" name="content" class="form-control"><%= @content %></textarea>
   </div>
   <div class="mb-3">
-    <label for="basename" class="form-label">openHAB 設定ファイル名</label>
-    <input type="text" id="basename" name="basename" value="<%= @basename %>" class="form-control">
+    <label for="basename" class="form-label">openHAB 設定ファイル名：<%= @basename %></label>
   </div>
   <div class="mb-3">
-    <label for="file_type" class="form-label">拡張子</label>
-    <select id="file_type" name="file_type" value="<%= @file_type %>">
-      <option value="items">items</option>
-      <option value="things">things</option>
+    <label for="file_type" class="form-label">拡張子：<%= @file_type %></label>
     </select>
   </div>
   <div>

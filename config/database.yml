@@ -8,19 +8,19 @@ development:
   <<: *default
   database: postgres
   username: habitatx
-  password: habitatX
+  password: your_password
   host: localhost
 
 test:
   <<: *default
   database: postgres
   username: habitatx
-  password: habitatX
+  password: your_password
   host: localhost
 
 production:
   <<: *default
   database: postgres
   username: habitatx
-  password: habitatX
+  password: your_password
   host: localhost

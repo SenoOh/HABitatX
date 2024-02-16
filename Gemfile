@@ -13,3 +13,4 @@ gem 'zip-zip'
 gem "activerecord"
 gem "sinatra-activerecord"
 gem "rake"
+gem "rackup"

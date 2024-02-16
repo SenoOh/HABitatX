@@ -29,7 +29,7 @@ class Datafile < ActiveRecord::Base
 end
 
 
-def post_things(hash_json, template_code)
+def post_things(hash_json, template_code, template_basename)
   puts "dedededede:#{hash_json.inspect}"
   for code in hash_json['data']
     erb_template = ERB.new(template_code) # テンプレート文字列を使用する
@@ -42,31 +42,31 @@ def post_things(hash_json, template_code)
         end
       end
     end
-    FileUtils.cp("#{__dir__}/db/fixed_thing.erb", "#{OPENHAB_PATH}/things/#{code['thingID']}.things")
+    FileUtils.cp("#{__dir__}/db/fixed_thing.erb", "#{OPENHAB_PATH}/things/#{template_basename}_#{code['thingID']}.things")
   end
   File.delete("#{__dir__}/db/created_thing.erb")
   File.delete("#{__dir__}/db/fixed_thing.erb")
 end
 
-def delete_things(hash_json)
+def delete_things(hash_json, template_basename)
   puts "dedededede:#{hash_json.inspect}"
   for code in hash_json['data']
-    File.delete("#{OPENHAB_PATH}/things/#{code['thingID']}.things")
+    File.delete("#{OPENHAB_PATH}/things/#{template_basename}_#{code['thingID']}.things")
   end
 end
 
 
-def post_items(hash_json, template_code)
+def post_items(hash_json, template_code, template_basename)
   for code in hash_json['data']
     erb_template = ERB.new(template_code) # テンプレート文字列を使用する
     output = erb_template.result(binding) # erbファイルを書き換える
-    File.open("#{OPENHAB_PATH}/items/#{code['itemID']}.items", 'w') { |file| file.write(output) } # 新しいファイルにoutputでの変更を書き換える
+    File.open("#{OPENHAB_PATH}/items/#{template_basename}_#{code['itemID']}.items", 'w') { |file| file.write(output) } # 新しいファイルにoutputでの変更を書き換える
   end
 end
 
-def delete_items(hash_json)
+def delete_items(hash_json, template_basename)
   for code in hash_json['data']
-    File.delete("#{OPENHAB_PATH}/items/#{code['itemID']}.items")
+    File.delete("#{OPENHAB_PATH}/items/#{template_basename}_#{code['itemID']}.items")
   end
 end
 
@@ -115,6 +115,12 @@ get '/template' do
 end
 
 get '/template/new' do
+  template_things = File.join(settings.views, '_form_things.erb')
+  template_items = File.join(settings.views, '_form_items.erb')
+  @template_things_content = File.read(template_things)
+  @template_items_content = File.read(template_items)
+  puts @template_things_content
+  puts @template_items_content
   erb :'template/new'
 end
 
@@ -212,6 +218,7 @@ post '/datafile' do
   selected_template = Template.find_by(title_template: title_template)
   template_id = selected_template["id"]
   template_code = selected_template["content"]
+  template_basename = selected_template["basename"]
 
   
   Datafile.create(title_datafile: title_datafile, table: hash, template_id: template_id)
@@ -219,9 +226,9 @@ post '/datafile' do
   hash_json = JSON.parse(hash_to_json)
   puts "kkkkkkkkk:#{hash_json.inspect}"
   if selected_template["file_type"] == "things"
-    post_things(hash_json, template_code)
+    post_things(hash_json, template_code, template_basename)
   else
-    post_items(hash_json, template_code)
+    post_items(hash_json, template_code, template_basename)
   end
   redirect '/datafile'
 end
@@ -288,6 +295,7 @@ patch '/datafile/:id' do
   selected_template = Template.find_by(title_template: title_template)
   template_id = selected_template["id"]
   template_code = selected_template["content"]
+  template_basename = selected_template["basename"]
 
   return unless datafile
   datafile.update(title_datafile: title_datafile, table: table_data, template_id: template_id)
@@ -296,9 +304,9 @@ patch '/datafile/:id' do
   puts "dedededede:#{hash_json.class}"
   puts hash_json.class
   if selected_template["file_type"] == "things"
-    post_things(hash_json, template_code)
+    post_things(hash_json, template_code, template_basename)
   else
-    post_items(hash_json, template_code)
+    post_items(hash_json, template_code, template_basename)
   end
   redirect "/datafile/#{params[:id]}"
 end
@@ -307,18 +315,18 @@ end
 delete '/datafile/:id' do
   @template = Template.all
   datafile = Datafile.find_by(id: params[:id])
-  title_template = datafile["title_template"]
   template_id = datafile["template_id"]
-  template = Template.find_by(id: template_id)
+  selected_template = Template.find_by(id: template_id)
+  template_basename = selected_template["basename"]
   return unless datafile
 
   datafile.destroy
 
   hash_json = datafile["table"]
-  if template["file_type"] == "things"
-    delete_things(hash_json)
+  if selected_template["file_type"] == "things"
+    delete_things(hash_json, template_basename)
   else
-    delete_items(hash_json)
+    delete_items(hash_json, template_basename)
   end
   redirect '/datafile'
 end

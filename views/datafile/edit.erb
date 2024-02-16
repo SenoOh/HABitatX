@@ -1,7 +1,6 @@
 <form action="/datafile/<%= params[:id] %>" method="post">
   <div class="mb-3">
-    <label for="title_datafile" class="form-label">Datafileタイトル</label>
-    <input type="text" id="title_datafile" name="title_datafile" value="<%= @title_datafile %>" class="form-control">
+    <label for="title_datafile" class="form-label">Datafileタイトル：<%= @title_datafile %></label>
   </div>
   <div class="mb-3">
     <label for="table" class="form-label">Excel</label>

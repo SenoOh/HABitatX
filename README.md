@@ -14,16 +14,10 @@ HABitatX は，openHAB では煩雑になりがちな複数デバイスの一括
 
 # Setup
 ## HABitatX
-1. ダウンロードして`bundle install`する
+1. ダウンロードする
    ```bash
-   $ git clone https://github.com/SenoOh/HABitatra_docker.git
-   $ cd HABitatX
-   $ bundle install
+   $ git clone https://github.com/SenoOh/HABitatX.git
    ```
-2. DBを作成する
-  ```bash
-  $ bundle exec rake db:migrate
-  ```
 ## Install SQL
 本システムは`DB`との接続に`ActiveRecord`を使用しているため，任意のリレーショナルデータベース管理システム(`RDBMS`)を使用できる．今回は例として`PostgreSQL`のインストールについて説明する．
 
@@ -47,9 +41,10 @@ $ sudo systemctl status postgresql
 $ sudo -u postgres createuser -s habitatx
 $ sudo -i -u postgres
 ```
-+ データベースの接続を確認する
++ データベースに接続して ROLE の password を変更する
 ```
 $ psql
+postgres=# ALTER USER habitatx PASSWORD 'your_password'; 
 ```
 + シェルからログアウトし，PostgreSQLの pg_hba.conf ファイルの認証方式を`peer`から`trust`に書き換える
 ```
@@ -59,9 +54,23 @@ $ sudo nano /etc/postgresql/14/main/pg_hba.conf
 ```
 $ sudo systemctl restart postgresql
 ```
++ PostgreSQLに関連するライブラリをインストールする
+```
+$ sudo apt install libpq-dev
+```
+
 # Launch
 ## 事前準備
-+ `habitatx.rb` の `OPENHAB_PATH` を自分の openHAB の設定ファイルが置かれるディレクトリに変更する
+1. `habitatx.rb` の `OPENHAB_PATH` を自分の `openHAB` の設定ファイルが置かれるディレクトリに変更する
+2. `config/database.yml` の `SQL` の情報を自分の `SQL` の情報に変更する
+3. `bundle install`する
+   ```bash
+   $ bundle install
+   ```
+4. DBを作成する
+  ```bash
+  $ bundle exec rake db:migrate
+  ```
 
 ## Linux
 1. 起動
